@@ -22,14 +22,14 @@ local_hour = t_pytz.hour
 local_minute = t_pytz.minute
 
 st.session_state.radio_dict = {}
-if st.session_state.radio_dict is None:
-    st.session_state.radio_dict = {}
+#if st.session_state.radio_dict is None:
+    #st.session_state.radio_dict = {}
 
 # Initialize or load existing data from CSV
 try:
     df = pd.read_csv('rvu.csv')
 except FileNotFoundError:
-    df = pd.DataFrame(columns=['Date', 'Time', 'CPT', 'RVU'])
+    df = pd.DataFrame(columns=['date', 'time_stamp', 'cpt', 'wrvu'])
 
 #google_sheet_url = st.secrets["private_gsheets_url"]
 
@@ -48,7 +48,7 @@ def save_into_csv(date,time, cpt, wrvu):
     Save the data into a  csv file
     """
     date, time_stamp = convert_datatime_to_string(date, time)
-    data = {'Date': [date], 'Time': [time_stamp], 'CPT': [cpt], 'RVU': [wrvu]}
+    data = {'date': [date], 'time_stamp': [time_stamp], 'cpt': [cpt], 'wrvu': [wrvu]}
     df_new = pd.DataFrame(data)
     df = pd.concat([df, df_new], ignore_index=True)
     df.to_csv('rvu.csv', index=False)
@@ -86,7 +86,7 @@ def read_data_from_google_sheet():
     try:
         df = pd.read_csv('rvu.csv')
     except FileNotFoundError:
-        df = pd.DataFrame(columns=['Date', 'Time', 'CPT', 'RVU'])
+        df = pd.DataFrame(columns=['date', 'time_stamp', 'cpt', 'wrvu'])
 
     return df
 
@@ -109,7 +109,9 @@ def report_by_date(df, start_date, end_date):
     df["date"] = df["date"].dt.date
     df = df[(df["date"] >= start_date) & (df["date"] <= end_date)]
     total_wrvu = df["wrvu"].sum()
-    df = df.groupby("cpt").agg({"Count": "count", "wrvu": "sum"})
+    # Groups the data by 'cpt' and calculates the count of entries and the sum of 'wrvu' for each group
+    df = df.groupby("cpt").agg(count=('cpt', 'count'), wrvu_sum=('wrvu', 'sum'))
+    #df = df.groupby("cpt").agg({"Count": "count", "wrvu": "sum"})
     return total_wrvu, df
 
 
